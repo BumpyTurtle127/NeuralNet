@@ -84,4 +84,4 @@ void getCol_fnnMat(fnnMat ** a, int colNum);
 void hadamard_fnnMat(fnnMat ** a, fnnMat ** b);
 
 void print_fnnMat(fnnMat * a);
-void destroy_fnnMat(fnnMat * a);
+void destroy_fnnMat(fnnMat ** a);

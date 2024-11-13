@@ -27,18 +27,17 @@ double len_fnnMat(fnnMat * a){
 }
 
 void sE(fnnMat ** a, fnnMat ** b){
-	if(*a != NULL) destroy_fnnMat(*a); // smth wrong 1
+	if(*a != NULL) destroy_fnnMat(a); // smth wrong 1
 	(*a) = (*b);
 	return;
 }
 
 fnnMat * init_fnnMat(int rows, int cols){
 	/* Allocate memory for the matrix */
-	fnnMat * ret = (fnnMat*)malloc(sizeof(fnnMat));
 	if(rows == 0 || cols == 0){
 		printf("Rows or cols are 0.\n");
 		return NULL;
-	}
+	} fnnMat * ret = (fnnMat*)malloc(sizeof(fnnMat));
 
 	/* Initialize the rows and columns and set to 0 */
 	ret->mat = (double**)malloc(rows*sizeof(double*));
@@ -270,7 +269,7 @@ void rref_fnnMat(fnnMat ** a){
 			if(b->mat[i][j] == 0) b->mat[i][j] = 0;
 
 	/* Destroy matrix a and replace with b */
-	destroy_fnnMat(*a);
+	destroy_fnnMat(a);
 	(*a) = b;
 
 	/* Return */
@@ -278,31 +277,41 @@ void rref_fnnMat(fnnMat ** a){
 }
 
 void add_fnnMat(fnnMat ** a, fnnMat ** b){
-	fnnMat * A = *a, * B = *b;
-
 	/* Return if matrices don't match */
-	if(A == NULL || B == NULL) return;
-	if(A->rows != B->rows || A->cols != B->cols) return;
+	if(*a == NULL || *b == NULL) return;
+	if((*a)->rows != (*b)->rows || (*a)->cols != (*b)->cols){
+		printf("Matrices %p and %p don't match in add_fnnMat(%d %d %d %d).\n", *a, *b, (*a)->rows, (*a)->cols, (*b)->rows, (*b)->cols);
+		return;
+	} fnnMat * newMat = init_fnnMat((*a)->rows, (*a)->cols);
 	
 	/* Add all values of b to a */
-	for(int i = 0; i < A->rows; i++)
-		for(int j = 0; j < A->rows; j++)
-			(*a)->mat[i][j] += (*b)->mat[i][j];
+	for(int i = 0; i < newMat->rows; i++)
+		for(int j = 0; j < newMat->cols; j++)
+			newMat->mat[i][j] = (*a)->mat[i][j] + (*b)->mat[i][j];
+
+	/* Destroy matrix a and replace with newMat */
+	destroy_fnnMat(a);
+	(*a) = newMat;
 
 	/* Return */
 	return;
 }
 
 void sub_fnnMat(fnnMat ** a, fnnMat ** b){
-	fnnMat * A = *a, * B = *b;
-
 	/* Return if matrices don't match */
-	if(A->rows != B->rows || A->cols != B->cols) return;
+	if((*a)->rows != (*b)->rows || (*a)->cols != (*b)->cols){		
+		printf("Matrices %p and %p don't match in sub_fnnMat(%d %d %d %d).\n", *a, *b, (*a)->rows, (*a)->cols, (*b)->rows, (*b)->cols);
+		return;
+	} fnnMat * newMat = init_fnnMat((*a)->rows, (*a)->cols);
 	
 	/* Add all values of b to a */
-	for(int i = 0; i < A->rows; i++)
-		for(int j = 0; j < A->rows; j++)
-			A->mat[i][j] -= B->mat[i][j];
+	for(int i = 0; i < newMat->rows; i++)
+		for(int j = 0; j < newMat->cols; j++)
+			newMat->mat[i][j] = (*a)->mat[i][j] - (*b)->mat[i][j];
+
+	/* Destroy matrix a and replace with newMat */
+	destroy_fnnMat(a);
+	(*a) = newMat;
 
 	/* Return */
 	return;
@@ -313,24 +322,28 @@ void mult_fnnMat(fnnMat ** a, fnnMat ** b){
 	fnnMat * B = *b;
 
 	/* Return if matrices don't match */
-	if(A->cols != B->rows) return;
+	if((*a)->cols != (*b)->rows){
+		printf("Matrices %p and %p do not match.\n", *a, *b);
+		printf("%d %d %d %d\n", (*a)->rows, (*a)->cols, (*b)->rows, (*b)->cols);
+		return;
+	}
 
 	/* Make a new matrix */
-	fnnMat * newMat = init_fnnMat(A->rows, B->cols);
-	newMat->rows = A->rows; newMat->cols = B->cols;
+	fnnMat * newMat = init_fnnMat((*a)->rows, (*b)->cols);
+	newMat->rows = (*a)->rows; newMat->cols = (*b)->cols;
 
 	/* Computations */
 	double total = 0;
-	for(int i = 0; i < A->rows; i++){
-		for(int j = 0; j < B->cols; j++){
-			for(int k = 0; k < A->cols; k++){
-				total += (A->mat[i][k])*(B->mat[k][j]);
+	for(int i = 0; i < (*a)->rows; i++){
+		for(int j = 0; j < (*b)->cols; j++){
+			for(int k = 0; k < (*a)->cols; k++){
+				total += ((*a)->mat[i][k])*((*b)->mat[k][j]);
 			} newMat->mat[i][j] = total; total = 0;
 		}
 	}
 
 	/* Destroy matrix a and replace with newMat */
-	destroy_fnnMat(*a);
+	destroy_fnnMat(a);
 	(*a) = newMat;
 
 	/* Return */
@@ -366,7 +379,7 @@ void invert_fnnMat(fnnMat ** a){
 	split_fnnMat(&newMat, A->cols, 1);
 	
 	/* Destroy matrix a and replace with newMat */
-	destroy_fnnMat(A);
+	destroy_fnnMat(a);
 	(*a) = newMat;
 
 	/* Free IdenA */
@@ -391,7 +404,7 @@ void transpose_fnnMat(fnnMat ** a){
 			newMat->mat[j][i] = A->mat[i][j];
 
 	/* Destroy matrix a and replace with newMat */
-	destroy_fnnMat(A);
+	destroy_fnnMat(a);
 	(*a) = newMat;
 
 	/* Return */
@@ -417,7 +430,7 @@ void augment_fnnMat(fnnMat ** a, fnnMat ** b){
 	}
 
 	/* Destroy matrix a and replace with newMat */
-	destroy_fnnMat(A);
+	destroy_fnnMat(a);
 	(*a) = newMat;
 
 	/* Return */
@@ -445,7 +458,7 @@ void split_fnnMat(fnnMat ** a, int numCols, int LorR){
 	}
 
 	/* Destroy matrix a and replace with newMat */
-	destroy_fnnMat(A);
+	destroy_fnnMat(a);
 	(*a) = newMat;
 
 	/* Return */
@@ -471,14 +484,29 @@ void getCol_fnnMat(fnnMat ** a, int colNum){
 void hadamard_fnnMat(fnnMat ** a, fnnMat ** b){
 	fnnMat * A = *a, * B = *b;
 
-	/* Return if matrices don't match */
-	if(A->rows != B->rows || A->cols != B->cols) return;
-
-	/* Multiply all elements of b into a */
-	for(int i = 0; i < A->rows; i++)
-		for(int j = 0; j < B->cols; j++)
-			A->mat[i][j] *= B->mat[i][j];
-
+	if((*a)->rows == (*b)->rows && (*a)->cols == (*b)->cols){
+		/* Multiply all elements of b into a */
+		for(int i = 0; i < A->rows; i++)
+			for(int j = 0; j < B->cols; j++)
+				(*a)->mat[i][j] *= (*b)->mat[i][j];
+	} else if((*a)->cols == 1 && (*a)->rows == (*b)->rows){
+		fnnMat * newMat = init_fnnMat((*b)->rows, (*b)->cols);
+		newMat->rows = (*b)->rows; newMat->cols = (*b)->cols;
+		for(int i = 0; i < (*b)->rows; i++)
+			for(int j = 0; j < (*b)->cols; j++)
+				newMat->mat[i][j] = ((*a)->mat[i][0])*((*b)->mat[i][j]);
+		destroy_fnnMat(a);
+		(*a) = newMat;
+	} else if((*b)->cols == 1 && (*a)->rows == (*b)->rows){
+		fnnMat * newMat = init_fnnMat((*a)->rows, (*a)->cols);
+		newMat->rows = (*a)->rows; newMat->cols = (*a)->cols;
+		for(int i = 0; i < (*a)->rows; i++)
+			for(int j = 0; j < (*a)->cols; j++)
+				newMat->mat[i][j] = ((*b)->mat[i][1])*((*a)->mat[i][j]);
+		destroy_fnnMat(a);
+		(*a) = newMat;
+	}
+	
 	/* Return */
 	return;
 }
@@ -498,14 +526,16 @@ void print_fnnMat(fnnMat * a){
 	return;
 }
 
-void destroy_fnnMat(fnnMat * a){
+void destroy_fnnMat(fnnMat ** a){
 	/* Destroy the rows and cols */
-	if(a == NULL) return;
-	for(int i = 0; i < a->rows; i++) free(a->mat[i]);
-	free(a->mat);
+	if(*a == NULL) return;
+	for(int i = 0; i < (*a)->rows; i++) free((*a)->mat[i]);
+	free((*a)->mat);
 
 	/* Destroy the matrix struct */
-	free(a);
+	free(*a);
+
+	*a = NULL;
 
 	return;
 }

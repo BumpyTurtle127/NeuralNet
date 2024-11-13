@@ -69,6 +69,7 @@ double feedData(fnnData * data, fnnNet * net, int lineNum){
 	/* Input nodes are the POST-ACTIVATED nodes of the first layer */
 	fnnMat * temp = pop_1d_fnnMat(net->numNodes[0], 1, data->inputs[lineNum]);
 	fnnMat * activatedTemp;
+	//sE(&(net->layers[0][0]), &(temp));
 	sE(&(net->layers[0][1]), &(temp));
 
 	/* Computations */
@@ -81,14 +82,13 @@ double feedData(fnnData * data, fnnNet * net, int lineNum){
 	}
 
 	/* Compute Error */
-	fnnMat * desiredOut = pop_1d_fnnMat(data->outputWidth, 1, data->outputs[lineNum]);
-	//print_fnnMat(desiredOut);
+	fnnMat * desiredOut = pop_1d_fnnMat(net->numNodes[net->numLayers-1], 1, data->outputs[lineNum]);
 	sub_fnnMat(&desiredOut, &activatedTemp);
 	double err = len_fnnMat(desiredOut);
-	err *= 0.5;
+	err *= 0.5 * (1/((double)(net->numNodes[net->numLayers-1])));
 
 	/* Destroy temporary matrices */
-	if(desiredOut != NULL) destroy_fnnMat(desiredOut);
+	if(desiredOut != NULL) destroy_fnnMat(&desiredOut);
 
 	/* Return error */
 	net->err = err;
@@ -100,7 +100,8 @@ int recursiveBackprop(fnnNet * net, fnnMat * dEdO, int matNum){
 	if(matNum < 0) return 0;
 	fnnMat * local_dEdO = duplicate(dEdO);
 	fnnMat * tempIden = initIdentity_fnnMat(net->numNodes[matNum+1]);
-	fnnMat * dOdA = duplicate(net->weights[matNum]);
+	fnnMat * dOdA = duplicate(net->weights[matNum+1]);
+		transpose_fnnMat(&dOdA);
 	fnnMat * dAdO = dActivate(net->layers[matNum+1][1]);
 		hadamard_fnnMat(&dAdO, &tempIden);
 	fnnMat * dOdW = duplicate(net->layers[matNum][1]);
@@ -113,12 +114,12 @@ int recursiveBackprop(fnnNet * net, fnnMat * dEdO, int matNum){
 
 	multConst_fnnMat(LEARNRATE, &dAdO);
 	add_fnnMat(&(net->weights[matNum]), &dAdO);
-
-	destroy_fnnMat(tempIden);
-	destroy_fnnMat(local_dEdO);
-	destroy_fnnMat(dOdA);
-	destroy_fnnMat(dAdO);
-	destroy_fnnMat(dOdW);
+	
+	destroy_fnnMat(&tempIden);
+	destroy_fnnMat(&local_dEdO);
+	destroy_fnnMat(&dOdA);
+	destroy_fnnMat(&dAdO);
+	destroy_fnnMat(&dOdW);
 	return 1;
 }
 
@@ -149,10 +150,10 @@ double backprop(fnnData * data, fnnNet * net, int lineNum){
 	multConst_fnnMat(LEARNRATE, &dAdO);
 	add_fnnMat(&(net->weights[net->numLayers-2]), &dAdO);
 
-	destroy_fnnMat(tempIden);
-	destroy_fnnMat(dAdO);
-	destroy_fnnMat(dOdW);
-	destroy_fnnMat(dEdA);
+	destroy_fnnMat(&tempIden);
+	destroy_fnnMat(&dAdO);
+	destroy_fnnMat(&dOdW);
+	destroy_fnnMat(&dEdA);
 	return 0; //feedData(data, net, lineNum);
 }
 

@@ -1,16 +1,13 @@
 #include <stdio.h>
-#include "fnn.h"
+#include "src/fnn.h"
 
 #define LEARNRATE 0.005
 
 int main(){
-	int nL[] = {2, 3, 1}; // Try entering numbers more than 4
-	fnnData * dataa = load_fnnData(2, 1, "XOR.csv");
-	fnnNet * nett = initNet(3, nL);
-	printf("%p\n", nett);
-	printf("%p %p\n", nett->layers, nett->layers[1]);
-	printf("%p %p\n", nett->layers[1][0], nett->layers[1][1]);
-	for(int i = 0; i < 4000; i++){
+	int nL[] = {3, 6, 6, 2};
+	fnnData * dataa = load_fnnData(3, 2, "./FA.csv");
+	fnnNet * nett = initNet(4, nL);
+	for(int i = 0; i < 10000; i++){
 		feedData(dataa, nett, 0);
 		backprop(dataa, nett, 0);
 		feedData(dataa, nett, 1);
@@ -19,11 +16,23 @@ int main(){
 		backprop(dataa, nett, 2);
 		feedData(dataa, nett, 3);
 		backprop(dataa, nett, 3);
+		feedData(dataa, nett, 4);
+		backprop(dataa, nett, 4);
+		feedData(dataa, nett, 5);
+		backprop(dataa, nett, 5);
+		feedData(dataa, nett, 6);
+		backprop(dataa, nett, 6);
+		feedData(dataa, nett, 7);
+		backprop(dataa, nett, 7);
 	}
 	printf("Error: %lf\n", feedData(dataa, nett, 0));
 	printf("Error: %lf\n", feedData(dataa, nett, 1));
 	printf("Error: %lf\n", feedData(dataa, nett, 2));
 	printf("Error: %lf\n", feedData(dataa, nett, 3));
+	printf("Error: %lf\n", feedData(dataa, nett, 4));
+	printf("Error: %lf\n", feedData(dataa, nett, 5));
+	printf("Error: %lf\n", feedData(dataa, nett, 6));
+	printf("Error: %lf\n", feedData(dataa, nett, 7));
 	printWeights(nett);
 	destroyNet(nett);
 	return 0;
