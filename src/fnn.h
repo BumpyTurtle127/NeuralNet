@@ -26,8 +26,8 @@ typedef struct{
 /* fnn.c */
 /* lineNum indexing starts at 0 */
 /* Each function returns the loss as MSE */
-/* To use trainNetWithVisual, compile with raylib */
 fnnNet * initNet(int numLayers, int * numNodes);
+fnnNet * initNetFromFile(char * filename);
 fnnMat * dActivate(fnnMat * vec);
 double feedData(fnnData * data, fnnNet * net, int lineNum);
 double backprop(fnnData * data, fnnNet * net, int lineNum);
@@ -35,11 +35,12 @@ double singleEpoch(fnnData * data, fnnNet * net);
 double trainNet(fnnData * data, fnnNet * net, int numEpochs);
 void trainNetWithVisual(fnnData * data, fnnNet * net, int numEpochs);
 fnnMat * activateVec(fnnMat * vec, char activation);
+void printWeightsToFile(fnnNet * net, char * filename);
 void printWeights(fnnNet * net);
 void destroyNet(fnnNet * a);
 
 /* csv.c */
-fnnData * load_fnnData(int numInputs, int numOutputs, char * filename);
+fnnData * load_fnnData(int numInputs, int numOutputs, char order, char * filename);
 int getInputW_fnnData(fnnData * a);
 int getOutputW_fnnData(fnnData * a);
 int getHeight_fnnData(fnnData * a);

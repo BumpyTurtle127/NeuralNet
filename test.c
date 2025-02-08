@@ -4,36 +4,24 @@
 #define LEARNRATE 0.005
 
 int main(){
-	int nL[] = {3, 6, 6, 2};
-	fnnData * dataa = load_fnnData(3, 2, "./FA.csv");
+	int nL[] = {2, 3, 3, 1};
+	fnnData * dataa = load_fnnData(2, 1, 'i', "./sample_training_data/XOR.csv");
 	fnnNet * nett = initNet(4, nL);
-	for(int i = 0; i < 10000; i++){
-		feedData(dataa, nett, 0);
-		backprop(dataa, nett, 0);
-		feedData(dataa, nett, 1);
-		backprop(dataa, nett, 1);
-		feedData(dataa, nett, 2);
-		backprop(dataa, nett, 2);
-		feedData(dataa, nett, 3);
-		backprop(dataa, nett, 3);
-		feedData(dataa, nett, 4);
-		backprop(dataa, nett, 4);
-		feedData(dataa, nett, 5);
-		backprop(dataa, nett, 5);
-		feedData(dataa, nett, 6);
-		backprop(dataa, nett, 6);
-		feedData(dataa, nett, 7);
-		backprop(dataa, nett, 7);
+	if(dataa == NULL) printf("Failed to open file\n");
+	printf("Initial Errors: %d\n", dataa->height);
+	for(int i = 0; i < dataa->height; i++)
+		printf("Error: %lf\n", feedData(dataa, nett, i));
+	for(int i = 0; i < 100000; i++){
+		for(int j = 0; j < nett->numLayers; j++){
+			feedData(dataa, nett, j);
+			backprop(dataa, nett, j);
+		}
 	}
-	printf("Error: %lf\n", feedData(dataa, nett, 0));
-	printf("Error: %lf\n", feedData(dataa, nett, 1));
-	printf("Error: %lf\n", feedData(dataa, nett, 2));
-	printf("Error: %lf\n", feedData(dataa, nett, 3));
-	printf("Error: %lf\n", feedData(dataa, nett, 4));
-	printf("Error: %lf\n", feedData(dataa, nett, 5));
-	printf("Error: %lf\n", feedData(dataa, nett, 6));
-	printf("Error: %lf\n", feedData(dataa, nett, 7));
+	printf("Final Errors:\n");
+	for(int i = 0; i < dataa->height; i++)
+		printf("Error: %lf\n", feedData(dataa, nett, i));
 	printWeights(nett);
+	printWeightsToFile(nett, "TestXorWeights");
 	destroyNet(nett);
 	return 0;
 }

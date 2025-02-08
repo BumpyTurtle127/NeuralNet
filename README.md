@@ -2,6 +2,10 @@
 
 NeuralNet is a C library for training Feed-Forward Neural Networks. Currently still under development, but it can train to >95% accuracy using the ReLU activation function.
 
+## Installation
+
+Clone the repository wherever you like, then call make.
+
 ## Usage
 
 Initialize a struct for all the training data, and a struct for the network.

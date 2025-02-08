@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
 #include "fnn.h"
 
 #ifndef LEARNRATE
@@ -37,6 +38,92 @@ fnnNet * initNet(int numLayers, int * numNodes){
 
 	/* Return the network struct */
 	return newNet;
+}
+
+double * resizeDoubleArr(double * arr, int * size){
+	(*size) += 1000;
+	printf("%d\n", *size);
+	double * temp = realloc(arr, *size);
+	if(temp == NULL){
+		printf("AAAAH\n");
+		return arr;
+	}
+
+	return temp;
+}
+
+fnnNet * initNetFromFile(char * filename){
+	/* Return if filename is null */
+	if(filename == NULL) return NULL;
+	
+	/*Declare necessary variables*/
+	char * sizeTok = "size";
+
+	/* Get filename without the extension */
+	char * newFilename = (char*)malloc(100*sizeof(char));
+	for(int i = 0; filename[i] != '.' && filename[i] != '\0'; i++)
+		newFilename[i] = filename[i];	
+
+	/* Add the extension back on */
+	char * fileExt = ".weights";
+	strcat(newFilename, fileExt);
+
+	/* Open the file in readonly mode and free filename memory */
+	FILE * fp = fopen(newFilename, "r");
+	free(newFilename);
+
+	/* Parse size */
+	char buf = fgetc(fp);
+	while(buf != ':') buf = fgetc(fp);
+	buf = fgetc(fp);
+
+	int numLayers = 0, * numNodes = (int*)malloc(20*sizeof(int)), i;
+	char * bufStr = (char*)malloc(30);
+	while(buf != '\n'){
+		buf = fgetc(fp);
+		for(i = 0; buf != ',' && buf != '\n'; i++){
+			bufStr[i] = buf;
+			buf = fgetc(fp);
+		} bufStr[i] = '\0';
+		numNodes[numLayers] = atoi(bufStr);
+		numLayers++;
+	}
+
+	/* Initialize the network and layers */
+	fnnNet * ret = (fnnNet*)malloc(sizeof(fnnNet));
+	ret->numLayers = numLayers; ret->numNodes = numNodes;
+	ret->layers = (fnnMat***)malloc(numLayers*sizeof(fnnMat**));
+	for(i = 0; i < numLayers; i++){
+		ret->layers[i] = (fnnMat**)malloc(2*sizeof(fnnMat*));
+		for(int j = 0; j < 2; j++)
+			ret->layers[i][j] = init_fnnMat(numNodes[i], 1); 
+	} ret->weights = (fnnMat**)malloc((numLayers-1)*sizeof(fnnMat*));
+
+	/* Parse the rest */
+	int sizeOfDoubleArr = 100000, doubleIndex = 0;
+	double * arr = (double*)malloc(sizeOfDoubleArr*sizeof(double));
+	for(int j = 0; buf != EOF && j < numLayers-1; j++){
+		while(buf != ':') buf = fgetc(fp);
+		buf = fgetc(fp);
+		while(buf != '\n' && buf != EOF){
+			buf = fgetc(fp);
+			for(i = 0; buf != ' ' && buf != '\n' && buf != EOF; i++){
+				bufStr[i] = buf;
+				buf = fgetc(fp);
+			} bufStr[i] = '\0';
+			arr[doubleIndex] = atof(bufStr);
+			doubleIndex++;
+			if(doubleIndex == sizeOfDoubleArr){
+				sizeOfDoubleArr += 1000;
+				double * temp = realloc(arr, sizeOfDoubleArr*sizeof(double));
+				if(temp != NULL) arr = temp;
+			}
+		}
+		ret->weights[j] = pop_1d_fnnMat(numNodes[j+1], numNodes[j], arr);
+		doubleIndex = 0;
+	}
+
+	return ret;
 }
 
 fnnMat * activateVec(fnnMat * vec, char activation){
@@ -155,6 +242,47 @@ double backprop(fnnData * data, fnnNet * net, int lineNum){
 	destroy_fnnMat(&dOdW);
 	destroy_fnnMat(&dEdA);
 	return 0; //feedData(data, net, lineNum);
+}
+
+void printWeightsToFile(fnnNet * net, char * filename){
+	/* Return if null arguments */
+	if(net == NULL || filename == NULL) return;
+
+	/* Declare necessary variables */
+	int originalName = strlen(filename);
+	char nameAppend[] = ".weights";
+	char * newFilename = (char*)malloc((originalName+9)*sizeof(char));
+	
+	/* Make new filename */
+	for(int i = 0; i < originalName; i++) newFilename[i] = filename[i];
+	for(int i = 0; i < 8; i++) newFilename[originalName+i] = nameAppend[i];
+	newFilename[originalName+8] = '\0';
+
+	/* Open the new file */
+	FILE * fp = fopen(newFilename, "w");
+	
+	/* Write the size of the network */
+	fprintf(fp, "size: ");
+	for(int i = 0; i < net->numLayers-1; i++){
+		fprintf(fp, "%d, ", net->numNodes[i]);
+	} fprintf(fp, "%d\n\n", net->numNodes[net->numLayers-1]);
+
+	/* Write the weights */
+	for(int i = 0; i < net->numLayers-1; i++){
+		fprintf(fp, "W%d: ", i+1);
+		for(int j = 0; j < net->numNodes[i+1]; j++){
+			for(int k = 0; k < net->numNodes[i]; k++){
+				fprintf(fp, "%lf ", net->weights[i]->mat[j][k]);
+			}
+		} fprintf(fp, "\n\n");
+	}
+
+
+	/* Close the file and free the memory */
+	fclose(fp);
+	free(newFilename);
+
+	return;
 }
 
 void printWeights(fnnNet * net){

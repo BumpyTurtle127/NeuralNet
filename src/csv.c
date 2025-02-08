@@ -2,7 +2,10 @@
 #include <stdlib.h>
 #include "fnn.h"
 
-fnnData * load_fnnData(int numInputs, int numOutputs, char * filename){
+fnnData * load_fnnData(int numInputs, int numOutputs, char order, char * filename){
+	/* Make sure function can execute properly */
+	if(!(order == 'i' || order == 'o')) return NULL;
+
 	/* Declare necessary variables */
 	int dW = (numInputs + numOutputs) + 2; // dW = dataWidth
 	int dW12 = 12*dW;
@@ -34,10 +37,17 @@ fnnData * load_fnnData(int numInputs, int numOutputs, char * filename){
 		rV = parseString(buffer, dW);
 
 		/* Save line to struct */
-		for(int i = 0; i < numInputs; i++)
-			newData->inputs[lineNum][i] = rV[i+1];
-		for(int i = 0; i < numOutputs; i++)
-			newData->outputs[lineNum][i] = rV[i+numInputs+1];
+		if(order == 'i'){
+			for(int i = 0; i < numInputs; i++)
+				newData->inputs[lineNum][i] = rV[i+1];
+			for(int i = 0; i < numOutputs; i++)
+				newData->outputs[lineNum][i] = rV[i+numInputs+1];
+		} else{
+			for(int i = 0; i < numOutputs; i++)
+				newData->outputs[lineNum][i] = rV[i+1];
+			for(int i = 0; i < numInputs; i++)
+				newData->inputs[lineNum][i] = rV[i+numOutputs+1];
+		}
 		lineNum++;
 	}
 
